@@ -94,7 +94,7 @@ public class Task04 extends AbstractTestNGSpringContextTests {
 	 */
 	@Test
 	public void findProducts(){
-		List<Product> found = em.createQuery("TODO",Product.class).getResultList();
+		List<Product> found = em.createQuery("SELECT p FROM Product p",Product.class).getResultList();
 		Assert.assertEquals(found.size(), 4);
 	}
 	
@@ -103,7 +103,7 @@ public class Task04 extends AbstractTestNGSpringContextTests {
 	 */
 	@Test
 	public void findProductByName(){
-		List<Product> found = em.createQuery("TODO",Product.class).setParameter("name", "Flashlight").getResultList();
+		List<Product> found = em.createQuery("SELECT p FROM Product p where p.name = :name",Product.class).setParameter("name", "Flashlight").getResultList();
 		Assert.assertEquals(found.size(), 1);
 		Assert.assertEquals(found.get(0).getName(), "Flashlight");
 		Assert.assertEquals(found.get(0).getColor(), Color.RED);
@@ -115,8 +115,7 @@ public class Task04 extends AbstractTestNGSpringContextTests {
 	 */
 	@Test
 	public void countProducts() {
-		Long count = em.createQuery("TODO",Long.class).getSingleResult();
-			
+		Long count = em.createQuery("SELECT count(p) FROM Product p",Long.class).getSingleResult();
 		Assert.assertEquals(count, new Long(4));
 	}
 	
@@ -125,7 +124,7 @@ public class Task04 extends AbstractTestNGSpringContextTests {
 	 */
 	@Test
 	public void findProductsWithNonEmtpycategory() {
-		List<Product> found = em.createQuery("TODO",Product.class).getResultList();
+		List<Product> found = em.createQuery("SELECT p FROM Product p where p.categories IS NOT EMPTY ",Product.class).getResultList();
 
 		Assert.assertEquals(found.size(), 3);
 	}
