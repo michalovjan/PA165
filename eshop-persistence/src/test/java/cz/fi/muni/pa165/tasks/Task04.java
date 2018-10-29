@@ -14,6 +14,7 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 
+import cz.fi.muni.pa165.dao.ProductDao;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.Assert;
@@ -134,7 +135,7 @@ public class Task04 extends AbstractTestNGSpringContextTests {
 	 */
 	@Test
 	public void findProductsWithCategories(){
-		List<Product> found = em.createQuery("TODO",Product.class).getResultList();
+		List<Product> found = em.createQuery("SELECT p from Product p join fetch p.categories c",Product.class).getResultList();
 		
 		Assert.assertEquals(found.size(), 4);
 		//The following will throw exception in case the categories are not fetched
@@ -152,7 +153,7 @@ public class Task04 extends AbstractTestNGSpringContextTests {
 	 */
 	@Test
 	public void groupByAndOrderBy(){
-		List<Object[]> found= em.createQuery("TODO", Object[].class).getResultList();
+		List<Object[]> found= em.createQuery("select p.color, count(p) from Product p group by p.color", Object[].class).getResultList();
 		
 		Assert.assertEquals(found.size(), 2);
 		Assert.assertEquals(((Color) found.get(0)[0]), Color.RED);
@@ -167,7 +168,7 @@ public class Task04 extends AbstractTestNGSpringContextTests {
 	 */
 	@Test
 	public void groupByAndOrderBySelectNew() {
-		List<ColorCount> colorCounts = em.createQuery("TODO",ColorCount.class).getResultList();
+		List<ColorCount> colorCounts = em.createQuery("select new cz.fi.muni.pa165.tasks.ColorCount(p.color, count(p)) from Product p group by p.color",ColorCount.class).getResultList();
 		
 		Assert.assertEquals(colorCounts.get(0).getColor(), Color.RED);
 		Assert.assertEquals(colorCounts.get(0).getCount(), new Long(1));
@@ -184,7 +185,7 @@ public class Task04 extends AbstractTestNGSpringContextTests {
 		cal.setTime(new Date());
 		cal.add(Calendar.DAY_OF_MONTH, -1);
 		
-		List<Product> products= em.createQuery("TODO",Product.class).setParameter("date", cal.getTime()).getResultList();
+		List<Product> products= em.createQuery("select p from Product p where p.addedDate <= :date",Product.class).setParameter("date", cal.getTime()).getResultList();
 		
 		Assert.assertEquals(products.size(),1);
 		Assert.assertEquals(products.get(0).getName(), "Plate");
@@ -200,24 +201,25 @@ public class Task04 extends AbstractTestNGSpringContextTests {
 	@Test
 	public void leftJoinCagesWithPets() {
 		EntityManager em = emf.createEntityManager();
-		List<ProductAndCategory> productAndCategory = em.createQuery("TODO",ProductAndCategory.class).getResultList();
-		
+		List<ProductAndCategory> productAndCategory = em.createQuery("select new cz.fi.muni.pa165.tasks.ProductAndCategory(p, c) from Product p left join p.categories c on c.name = 'Kitchen' order by p.name"
+                ,ProductAndCategory.class).getResultList();
+
 		Assert.assertEquals(productAndCategory.size(), 5);
-		
+
 		Assert.assertEquals(productAndCategory.get(0).getProduct().getName(),"Flashlight");
 		Assert.assertNull(productAndCategory.get(0).getCategory());
-		
+
 		Assert.assertEquals(productAndCategory.get(1).getProduct().getName(),"Fork");
-		Assert.assertEquals(productAndCategory.get(1).getCategory().getName(), "Kitchen");		
-		
+		Assert.assertEquals(productAndCategory.get(1).getCategory().getName(), "Kitchen");
+
 		Assert.assertEquals(productAndCategory.get(2).getProduct().getName(),"Kitchen Robot");
-		Assert.assertEquals(productAndCategory.get(2).getCategory().getName(), "Kitchen");	
+		Assert.assertEquals(productAndCategory.get(2).getCategory().getName(), "Kitchen");
 
 		Assert.assertEquals(productAndCategory.get(3).getProduct().getName(),"Kitchen Robot");
 		Assert.assertNull(productAndCategory.get(3).getCategory());
 
 		Assert.assertEquals(productAndCategory.get(4).getProduct().getName(),"Plate");
-		Assert.assertEquals(productAndCategory.get(4).getCategory().getName(), "Kitchen");	
+		Assert.assertEquals(productAndCategory.get(4).getCategory().getName(), "Kitchen");
 	}
 	
 	/**
@@ -229,7 +231,8 @@ public class Task04 extends AbstractTestNGSpringContextTests {
 		CriteriaBuilder cb = em.getCriteriaBuilder();
 		CriteriaQuery<Product> query = cb.createQuery(Product.class);
 		//TODO under this line create a Root<Product> instance and then use .select() method on this instance
-		
+		Root<Product> root = query.from(Product.class);
+		query.select(root);
 		
 		List<Product> found = em.createQuery(query).getResultList();
 		Assert.assertEquals(found.size(), 4);
@@ -246,7 +249,9 @@ public class Task04 extends AbstractTestNGSpringContextTests {
 		CriteriaQuery<Product> query = cb.createQuery(Product.class);
 		//TODO under this line create a Root<Product> instance and then use .select() method on this instance and .where on this instance
 		//content of where should use CriteriaBuilder.isNotEmpty method
-		
+        Root<Product> root = query.from(Product.class);
+        query.select(root).where(cb.isNotEmpty(root.get("categories")));
+
 		List<Product> found = em.createQuery(query).getResultList();
 		Assert.assertEquals(found.size(), 3);
 	}

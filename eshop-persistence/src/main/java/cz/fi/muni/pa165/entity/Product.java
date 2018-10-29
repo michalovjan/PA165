@@ -26,7 +26,7 @@ public class Product {
 
 	private String imageMimeType;
 	
-
+    @NotNull
 	private String name;
 	
 	/*
